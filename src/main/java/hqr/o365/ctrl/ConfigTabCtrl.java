@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import hqr.o365.domain.LicenseInfo;
 import hqr.o365.domain.TaOfficeInfo;
+import hqr.o365.dao.TaOfficeInfoRepo;
 import hqr.o365.service.AddPassword;
 import hqr.o365.service.DeleteOfficeInfo;
 import hqr.o365.service.ExportAppInfo;
@@ -31,7 +32,7 @@ import hqr.o365.service.GetOfficeInfo;
 import hqr.o365.service.ImportAppInfo;
 import hqr.o365.service.SaveOfficeInfo;
 import hqr.o365.service.ScanAppStatusServiceForOne;
-import hqr.o365.service.SwitchConfig;
+import hqr.o365.service.SelectedOfficeInfo;
 import hqr.o365.service.ValidateAppInfo;
 
 @Controller
@@ -39,6 +40,9 @@ public class ConfigTabCtrl {
 	
 	@Autowired
 	private GetOfficeInfo gi;
+
+	@Autowired
+	private TaOfficeInfoRepo officeRepo;
 	
 	@Autowired
 	private SaveOfficeInfo si;
@@ -48,9 +52,6 @@ public class ConfigTabCtrl {
 	
 	@Autowired
 	private ValidateAppInfo vai;
-	
-	@Autowired
-	private SwitchConfig sc;
 	
 	@Autowired
 	private AddPassword ap;
@@ -98,7 +99,7 @@ public class ConfigTabCtrl {
 			System.out.println("Invalid row, force it to 10");
 		}
 		
-		return gi.getAllOfficeInfo(intRows, intPage);
+		return gi.getAllOfficeInfo(Math.max(1, Math.min(500, intRows)), Math.max(1, intPage));
 	}
 	
 	@ResponseBody
@@ -148,41 +149,20 @@ public class ConfigTabCtrl {
 	
 	@ResponseBody
 	@RequestMapping(value = {"/valiateAppInfo"}, method = RequestMethod.POST)
-	public boolean validate(@RequestParam(name="tenantId") String tenantId,@RequestParam(name="appId") String appId,@RequestParam(name="secretId") String secretId) {
-		return vai.checkAndGet(tenantId, appId, secretId);
+	public boolean validate(@RequestParam(name="seqNo") int seqNo) {
+		TaOfficeInfo info = officeRepo.findById(seqNo).orElse(null);
+		return info != null && vai.checkAndGet(info.getTenantId(), info.getAppId(), info.getSecretId());
 	}
 	
 	@ResponseBody
 	@RequestMapping(value = {"/switchConfig"}, method = RequestMethod.POST)
-	public boolean switchConfig(@RequestParam(name="seqNo") int seqNo, 
-			@RequestParam(name="userid") String userid, 
-			@RequestParam(name="passwd") String passwd, 
-			@RequestParam(name="tenantId") String tenantId, 
-			@RequestParam(name="appId") String appId , 
-			@RequestParam(name="secretId") String secretId, 
-			@RequestParam(name="remarks") String remarks,
-			@RequestParam(name="selected") String selected, 
-			HttpServletRequest req) {
-		
-		TaOfficeInfo ti = new TaOfficeInfo();
-		//seqNo==-1 -> insert; seqNo!=-1 -> update
-		if(seqNo!=-1) {
-			ti.setSeqNo(seqNo);
+	public boolean switchConfig(@RequestParam(name="seqNo") int seqNo, HttpServletRequest req) {
+		TaOfficeInfo ti = officeRepo.findById(seqNo).orElse(null);
+		if (ti == null) {
+			return false;
 		}
-		else {
-			ti.setCreateDt(new Date());
-		}
-		ti.setUserId(userid);
-		ti.setPasswd(passwd);
-		ti.setTenantId(tenantId);
-		ti.setAppId(appId);
-		ti.setSecretId(secretId);
-		ti.setRemarks(remarks);
-		ti.setLastUpdateDt(new Date());
-		ti.setLastUpdateId("mjj");
-		ti.setSelected("是");
-		
-		boolean flag = sc.updateConfig(ti);
+		req.getSession().setAttribute(SelectedOfficeInfo.SESSION_KEY, seqNo);
+		boolean flag = true;
 		if(flag) {
 			//change license
 			HashMap<String, Object> map2 = gli.getLicenses();
@@ -208,12 +188,12 @@ public class ConfigTabCtrl {
 	
 	@ResponseBody
 	@RequestMapping(value = {"/addPassword"}, method = RequestMethod.POST)
-	public String addPassword(@RequestParam(name="seqNo") int seqNo, 
-			@RequestParam(name="tenantId") String tenantId, 
-			@RequestParam(name="appId") String appId , 
-			@RequestParam(name="secretId") String secretId) {
-		
-		HashMap<String, String> map = ap.add(seqNo, tenantId, appId, secretId);
+	public String addPassword(@RequestParam(name="seqNo") int seqNo) {
+		TaOfficeInfo info = officeRepo.findById(seqNo).orElse(null);
+		if (info == null) {
+			return "无效的配置";
+		}
+		HashMap<String, String> map = ap.add(seqNo, info.getTenantId(), info.getAppId(), info.getSecretId());
 		String status = map.get("status");
 		
 		if("0".equals(status)) {

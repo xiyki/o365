@@ -8,12 +8,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
 
 import hqr.o365.dao.TaMasterCdRepo;
+import hqr.o365.dao.TaUserRepo;
 import hqr.o365.domain.TaMasterCd;
+import hqr.o365.domain.TaUser;
 import hqr.o365.service.SendLoginMsgToWx;
 import hqr.o365.service.TaUserDetailsService;
 
@@ -35,6 +38,9 @@ public class MyAuthenticationProvider implements AuthenticationProvider {
 
     @Autowired
     private TaMasterCdRepo tmc;
+
+    @Autowired
+    private TaUserRepo userRepo;
     
     @Autowired
     private SendLoginMsgToWx send;
@@ -57,12 +63,21 @@ public class MyAuthenticationProvider implements AuthenticationProvider {
         if (userInfo == null) {
             throw new BadCredentialsException("用户名不存在");
         }
-        boolean flag = passwordEncoder.matches(password,passwordEncoder.encode(userInfo.getPassword()));
+        String storedPassword = userInfo.getPassword();
+        boolean legacyPassword = !storedPassword.startsWith("$2a$") && !storedPassword.startsWith("$2b$")
+                && !storedPassword.startsWith("$2y$");
+        boolean flag = legacyPassword ? storedPassword.equals(password)
+                : passwordEncoder.matches(password, storedPassword);
         if (!flag) {
             throw new BadCredentialsException("密码不正确");
         }
         else {
-        	System.out.println("密码正确");
+			if (legacyPassword) {
+                TaUser user = userRepo.findByUserId(userName);
+                user.setPasswd(passwordEncoder.encode(password));
+                userRepo.save(user);
+                userInfo = new User(userInfo.getUsername(), user.getPasswd(), userInfo.getAuthorities());
+            }
         	
         	Optional<TaMasterCd> opt1 = tmc.findById("WX_CALLBACK_IND");
         	if(opt1.isPresent()) {
@@ -108,12 +123,10 @@ public class MyAuthenticationProvider implements AuthenticationProvider {
         
         Collection<? extends GrantedAuthority> authorities = userInfo.getAuthorities();
         // 构建返回的用户登录成功的token
-        return new UsernamePasswordAuthenticationToken(userInfo, password, authorities);
-        //return new UsernamePasswordAuthenticationToken(userInfo, null,authorities);
+        return new UsernamePasswordAuthenticationToken(userInfo, null, authorities);
     }
     @Override
     public boolean supports(Class<?> authentication) {
-        // 这里直接改成retrun true;表示是支持这个执行
-        return true;
+        return UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication);
     }
 }

@@ -1,18 +1,12 @@
 package hqr.o365.service;
 
 import java.io.IOException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.util.Optional;
 
-import javax.net.ssl.SSLContext;
 
 import org.apache.http.HttpHost;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -45,34 +39,28 @@ public class ValidateCfConfig {
 	
 	public void initlRestTemplate() {
 		try {
-			SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, new TrustStrategy() {
-				public boolean isTrusted(X509Certificate[] arg0, String arg1) throws CertificateException {
-					return true;
-				}
-			}).build();
 			
-			SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
 			CloseableHttpClient httpClient;
 			
 			Optional<TaMasterCd> opt = tmc.findById("HTTP_PROXY");
 			if(opt.isPresent()) {
 				TaMasterCd enti = opt.get();
 				if("".equals( enti.getCd() ) ) {
-					httpClient = HttpClients.custom().setSSLSocketFactory(csf).build();
+					httpClient = HttpClients.custom().build();
 				}
 				else {
 					try {
 						String proxy[] = enti.getCd().split(":");
-						httpClient = HttpClients.custom().setSSLSocketFactory(csf).setProxy(new HttpHost(proxy[0], Integer.parseInt(proxy[1]))).build();
+						httpClient = HttpClients.custom().setProxy(new HttpHost(proxy[0], Integer.parseInt(proxy[1]))).build();
 					}
 					catch (Exception e) {
 						System.out.println("invalid proxy "+enti.getCd());
-						httpClient = HttpClients.custom().setSSLSocketFactory(csf).build();
+						httpClient = HttpClients.custom().build();
 					}
 				}
 			}
 			else {
-				httpClient = HttpClients.custom().setSSLSocketFactory(csf).build();
+				httpClient = HttpClients.custom().build();
 			}
 
 			HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();

@@ -24,7 +24,7 @@ import hqr.o365.domain.TaOfficeInfo;
 
 @Service
 public class AddPassword {
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Autowired
 	private ValidateAppInfo vai;
@@ -39,8 +39,7 @@ public class AddPassword {
 	public HashMap<String, String> add(int seqNo, String tenantId, String appId, String secretId) {
 		HashMap<String, String> map = new HashMap<String, String>();
 		
-		vai.checkAndGet(tenantId, appId, secretId);
-		String accessToken = vai.getAccessToken();
+		String accessToken = vai.getToken(tenantId, appId, secretId);
 		
 		if(!"".equals(accessToken)) {
 			String endpoint = "https://graph.microsoft.com/v1.0/applications?$select=id,appId";
@@ -65,6 +64,11 @@ public class AddPassword {
 							System.out.println("found it "+tmpAppId);
 							break;
 						}
+					}
+					if (!appId.equals(tmpAppId)) {
+						map.put("status", "1");
+						map.put("message", "未找到对应应用，密钥未更新");
+						return map;
 					}
 					
 					endpoint = "https://graph.microsoft.com/v1.0/applications/"+objId+"/addPassword";

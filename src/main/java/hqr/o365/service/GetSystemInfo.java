@@ -9,6 +9,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 
 import hqr.o365.dao.TaMasterCdRepo;
 import hqr.o365.domain.TaMasterCd;
@@ -27,9 +28,17 @@ public class GetSystemInfo {
 			rows = tmc.findAll();
 		}
 		
+		List<JSONObject> visibleRows = new ArrayList<>();
+		for (TaMasterCd row : rows) {
+			JSONObject visible = (JSONObject) JSON.toJSON(row);
+			if (SensitiveSetting.isSensitive(row.getKeyTy())) {
+				visible.put("cd", "");
+			}
+			visibleRows.add(visible);
+		}
 		HashMap map = new HashMap();
 		map.put("total", total);
-		map.put("rows", rows);
+		map.put("rows", visibleRows);
 		
 		return JSON.toJSON(map).toString();
 	}

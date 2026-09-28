@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -19,7 +18,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-import cn.hutool.core.util.URLUtil;
 import hqr.o365.dao.TaMasterCdRepo;
 import hqr.o365.dao.TaOfficeInfoRepo;
 import hqr.o365.domain.OfficeUser;
@@ -28,8 +26,10 @@ import hqr.o365.domain.TaOfficeInfo;
 
 @Service
 public class GetOfficeUser {
+    @Autowired
+    private SelectedOfficeInfo selectedOfficeInfo;
 
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Autowired
 	private TaOfficeInfoRepo repo;
@@ -42,20 +42,16 @@ public class GetOfficeUser {
 	
 	@Value("${UA}")
     private String ua;
-
-	@Cacheable(value = "cacheOfficeUser")
 	public HashMap<String, String> getUsers(int page, int rows){
 		HashMap<String, String> map = new HashMap<String, String>();
 		List<OfficeUser> ll = new ArrayList<OfficeUser>();
 		HashMap jsonTmp = new HashMap();
 		
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			
 			if(!"".equals(accessToken)) {
 				String endpoint = "https://graph.microsoft.com/v1.0/users/$count";
@@ -157,7 +153,7 @@ public class GetOfficeUser {
 				//other page
 				else {
 					String nextPage = jo.getString("@odata.nextLink");
-					getNextUrl(URLUtil.decode(nextPage), accessToken, page-1, ll);
+					getNextUrl(nextPage, accessToken, page-1, ll);
 				}
 				jsonTmp.put("rows", ll);
 				map.put("status", "0");
@@ -176,13 +172,16 @@ public class GetOfficeUser {
 	}
 	
 	private void getNextUrl(String url, String accessToken, int times, List<OfficeUser> ll) {
+        if (url == null || !url.startsWith("https://graph.microsoft.com/")) {
+            return;
+        }
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(HttpHeaders.USER_AGENT, ua);
 		headers.add("Authorization", "Bearer "+accessToken);
 		String body="";
 		
 		HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
-		ResponseEntity<String> response= restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
+		ResponseEntity<String> response= restTemplate.exchange(java.net.URI.create(url), HttpMethod.GET, requestEntity, String.class);
 		
 		JSONObject jo = JSON.parseObject(response.getBody());
 		JSONArray ja = jo.getJSONArray("value");
@@ -225,7 +224,7 @@ public class GetOfficeUser {
 			}
 		}
 		else {
-			getNextUrl(URLUtil.decode(nextPage), accessToken, times, ll);
+			getNextUrl(nextPage, accessToken, times, ll);
 		}
 	}
 	

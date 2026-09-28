@@ -32,7 +32,7 @@
 							row = null;
 						}
 						
-						if(tenantId!='' && appId!='' && secretId!=''){
+						if(tenantId!='' && appId!='' && (secretId!='' || seqNo!=-1)){
 							$.ajax({
 								type : 'POST', 
 								url : '/saveConfig',
@@ -81,7 +81,7 @@
 			</tr>
 			<tr>
 				<td>密码:</td>
-				<td><input id="passwd" class="easyui-validatebox tb" style="width: 280px"></td>
+				<td><input id="passwd" type="password" class="easyui-validatebox tb" placeholder="留空则保持原值" style="width: 280px"></td>
 			</tr>
 			<tr>
 				<td>租户ID:</td>
@@ -93,7 +93,7 @@
 			</tr>
 			<tr>
 				<td>应用密码:</td>
-				<td><input id="secretId" class="easyui-validatebox tb" data-options="required:true" style="width: 280px"></td>
+				<td><input id="secretId" type="password" class="easyui-validatebox tb" placeholder="修改时留空则保持原值" style="width: 280px"></td>
 			</tr>
 			<tr>
 				<td>备注:</td>
@@ -181,10 +181,10 @@
 				if(row!=null&&row.length==1){
 					console.log(row[0]);
 					$('#userid').val(row[0].userId);
-					$('#passwd').val(row[0].passwd);
+					$('#passwd').val('');
 					$('#tenantId').val(row[0].tenantId);
 					$('#appId').val(row[0].appId);
-					$('#secretId').val(row[0].secretId);
+					$('#secretId').val('');
 					$('#remarks').val(row[0].remarks);
 					
 					$('#dlg1').dialog('open');
@@ -222,18 +222,11 @@
 			handler:function(){
 			    row = $('#tb1').datagrid('getSelections');
 				if(row!=null&&row.length==1){
-					var userid = row[0].userId;
-					var passwd = row[0].passwd;
-					var tenantId = row[0].tenantId;
-					var appId = row[0].appId;
-					var secretId = row[0].secretId;
-					var remarks = row[0].remarks;
 					var seqNo = row[0].seqNo;
-					var selected = '是';
 					$.ajax({
 					    type : "POST", 
 					    url : "/switchConfig",
-					    data : { 'seqNo': seqNo , 'userid': userid, 'passwd' : passwd, 'tenantId' : tenantId, 'appId': appId, 'secretId' : secretId, 'remarks': remarks, 'selected' : selected },
+				    data : { 'seqNo': seqNo },
 					    success : function(result) {
 						      if ( result ) {
 							      	$.messager.show({
@@ -279,15 +272,12 @@
 			    row = $('#tb1').datagrid('getSelections');
 				if(row!=null&&row.length==1){
 					var seqNo = row[0].seqNo;
-					var tenantId = row[0].tenantId;
-					var appId = row[0].appId;
-					var secretId = row[0].secretId;
 					$.messager.confirm('更新', '将创建一个过期时间为2099-12-31的新密钥，成功后会替换现有密钥，若不想更改现有密钥，请取消', function(r){
 						if (r){
 							$.ajax({
 							    type : "POST", 
 							    url : "/addPassword",
-							    data : { 'seqNo': seqNo , 'tenantId' : tenantId, 'appId': appId, 'secretId' : secretId },
+							    data : { 'seqNo': seqNo },
 							    success : function(result) {
 							      	$.messager.show({
 										title:'结果',
@@ -328,7 +318,7 @@
 					$.ajax({
 					    type : "POST", 
 					    url : "/valiateAppInfo",
-					    data : { "tenantId": row[0].tenantId, "appId" : row[0].appId, "secretId" : row[0].secretId },
+				    data : { "seqNo": row[0].seqNo },
 					    success : function(result) {
 					    	if(result){
 						       	$.messager.show({
@@ -419,20 +409,16 @@
 				}
 			}
 		},{
-			text:'On/Off',
+			text:'显示/隐藏应用ID',
 			iconCls:'icon-owl',
 			handler:function(){
 				if(!showInfo){
 					$('#tb1').datagrid('showColumn','appId');
-					$('#tb1').datagrid('showColumn','secretId');
 					$('#tb1').datagrid('hideColumn','maskAppId');
-					$('#tb1').datagrid('hideColumn','maskSecretId');
 				}
 				else{
 					$('#tb1').datagrid('hideColumn','appId');
-					$('#tb1').datagrid('hideColumn','secretId');
 					$('#tb1').datagrid('showColumn','maskAppId');
-					$('#tb1').datagrid('showColumn','maskSecretId');
 				}
 				showInfo = !showInfo;
 			}
@@ -477,11 +463,6 @@
 						return "<font size='2'>"+value+"</font>";
 					}
 				}, 
-				{field : 'passwd',title : '密码',align : 'center',sortable:true,
-					formatter: function(value,row,index){
-						return "<font size='2'>"+value+"</font>";
-					}
-				}, 
 				{field : 'tenantId',title : '租户ID',align : 'center',sortable:true,
 					formatter: function(value,row,index){
 						return "<font size='2'>"+value+"</font>";
@@ -493,11 +474,6 @@
 					}
 				}, 
 				{field : 'maskAppId',title : '应用ID',align : 'center',sortable:true,
-					formatter: function(value,row,index){
-						return "<font size='2'>"+value+"</font>";
-					}
-				}, 
-				{field : 'secretId',title : '应用密码',hidden:'true',align : 'center',sortable:true,
 					formatter: function(value,row,index){
 						return "<font size='2'>"+value+"</font>";
 					}

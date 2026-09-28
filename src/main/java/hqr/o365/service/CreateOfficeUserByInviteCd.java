@@ -35,7 +35,7 @@ import hqr.o365.domain.TaOfficeInfo;
  */
 @Service
 public class CreateOfficeUserByInviteCd {
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Autowired
 	private TaOfficeInfoRepo repo;
@@ -83,9 +83,7 @@ public class CreateOfficeUserByInviteCd {
 					//get info
 					TaOfficeInfo ta = opt1.get();
 					String accessToken = "";
-					if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-						accessToken = vai.getAccessToken();
-					}
+					accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 					
 					if(!"".equals(accessToken)) {
 						String userPrincipalName = mailNickname + tiiDo.getSuffix();
@@ -169,7 +167,7 @@ public class CreateOfficeUserByInviteCd {
 									ResponseEntity<String> response2= restTemplate.postForEntity(endpoint, requestEntity2, String.class);
 									if(response2.getStatusCodeValue()==200) {
 										response2.getBody();
-										tiiDo.setResult(ou.getUserPrincipalName()+"|"+password);
+										tiiDo.setResult(ou.getUserPrincipalName());
 										tiiDo.setInviteStatus("3");
 										tii.save(tiiDo);
 										resultMsg = "0|"+ou.getUserPrincipalName();
@@ -192,7 +190,7 @@ public class CreateOfficeUserByInviteCd {
 							}
 						}
 						else {
-							tiiDo.setResult(ou.getUserPrincipalName()+"|"+password);
+							tiiDo.setResult(ou.getUserPrincipalName());
 							tiiDo.setInviteStatus("3");
 							tii.save(tiiDo);
 							resultMsg = "0|"+ou.getUserPrincipalName();

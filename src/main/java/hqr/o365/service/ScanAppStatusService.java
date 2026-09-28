@@ -42,7 +42,7 @@ import hqr.o365.service.ValidateAppInfo;
 @Service
 public class ScanAppStatusService implements SchedulingConfigurer{
 	
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	private String cron = "0 0 4 */2 * ?";
 
@@ -142,9 +142,7 @@ public class ScanAppStatusService implements SchedulingConfigurer{
 				//before process sleep it
 				sleepMins(type);
 				
-				if(vai.checkAndGet(taAppRpt.getTenantId(), taAppRpt.getAppId(), taAppRpt.getSecretId())) {
-					accessToken = vai.getAccessToken();
-				}
+				accessToken = vai.getToken(taAppRpt.getTenantId(), taAppRpt.getAppId(), taAppRpt.getSecretId());
 				if(!"".equals(accessToken)) {
 					//get total admin user
 					String endpoint1 = "https://graph.microsoft.com/v1.0/directoryRoles/roleTemplateId="+roleId+"/members/$count";

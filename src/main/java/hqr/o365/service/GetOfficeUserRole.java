@@ -3,7 +3,6 @@ package hqr.o365.service;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -19,7 +18,9 @@ import hqr.o365.domain.TaOfficeInfo;
 
 @Service
 public class GetOfficeUserRole {
-	private RestTemplate restTemplate = new RestTemplate();
+    @Autowired
+    private SelectedOfficeInfo selectedOfficeInfo;
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Autowired
 	private TaOfficeInfoRepo repo;
@@ -29,17 +30,13 @@ public class GetOfficeUserRole {
 	
 	@Value("${UA}")
     private String ua;
-
-	@Cacheable(value="cacheUserRole")
 	public String getRole(String uid) {
 		String role = "";
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			
 			if(!"".equals(accessToken)) {
 				String endpoint = "https://graph.microsoft.com/v1.0/directoryObjects/"+uid+"/getMemberObjects";

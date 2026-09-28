@@ -4,22 +4,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
-import cn.hutool.core.util.URLUtil;
 import hqr.o365.dao.TaMasterCdRepo;
 import hqr.o365.dao.TaOfficeInfoRepo;
 import hqr.o365.domain.OfficeUser;
@@ -28,8 +28,10 @@ import hqr.o365.domain.TaOfficeInfo;
 
 @Service
 public class GetOfficeUserByKeyWord {
+    @Autowired
+    private SelectedOfficeInfo selectedOfficeInfo;
 
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Autowired
 	private TaOfficeInfoRepo repo;
@@ -43,22 +45,31 @@ public class GetOfficeUserByKeyWord {
 	@Value("${UA}")
     private String ua;
 
-	@Cacheable(value="cacheOfficeUserSearch")
+	private URI searchUri(String base, String keyword, Integer rows) {
+		String escaped = keyword.replace("'", "''");
+		String filter = "startsWith(displayName,'" + escaped
+				+ "') or startsWith(userPrincipalName,'" + escaped + "')";
+		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(base)
+				.queryParam("$filter", filter);
+		if (rows != null) {
+			builder.queryParam("$select", "accountEnabled,usageLocation,id,userPrincipalName,displayName,assignedLicenses")
+					.queryParam("$top", rows);
+		}
+		return builder.build().encode().toUri();
+	}
 	public HashMap<String, String> getUsers(int page, int rows, String keyword){
 		HashMap<String, String> map = new HashMap<String, String>();
 		List<OfficeUser> ll = new ArrayList<OfficeUser>();
 		HashMap jsonTmp = new HashMap();
 		
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			
 			if(!"".equals(accessToken)) {
-				String endpoint = "https://graph.microsoft.com/v1.0/users/$count?"+"$filter=startsWith(displayName,'"+keyword+"') or startsWith(userPrincipalName,'"+keyword+"')";
+				URI endpoint = searchUri("https://graph.microsoft.com/v1.0/users/$count", keyword, null);
 				HttpHeaders headers = new HttpHeaders();
 				headers.set(HttpHeaders.USER_AGENT, ua);
 				headers.add("Authorization", "Bearer "+accessToken);
@@ -66,7 +77,7 @@ public class GetOfficeUserByKeyWord {
 				String body="";
 				HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
 				try {
-					ResponseEntity<String> response= restTemplate.exchange(URLUtil.decode(endpoint), HttpMethod.GET, requestEntity, String.class);
+					ResponseEntity<String> response= restTemplate.exchange(endpoint, HttpMethod.GET, requestEntity, String.class);
 					String total = response.getBody();
 					System.out.println("total user count is "+total);
 					jsonTmp.put("total", total);
@@ -106,7 +117,7 @@ public class GetOfficeUserByKeyWord {
 	}
 	
 	private void saveOfficeUserInList(HashMap<String, String> map, List<OfficeUser> ll, HashMap jsonTmp, String accessToken, int page, int rows, String keyword) {
-		String endpoint2 = "https://graph.microsoft.com/v1.0/users?$select=accountEnabled,usageLocation,id,userPrincipalName,displayName,assignedLicenses&$filter=startsWith(displayName,'"+keyword+"') or startsWith(userPrincipalName,'"+keyword+"') &$top="+rows;
+		URI endpoint2 = searchUri("https://graph.microsoft.com/v1.0/users", keyword, rows);
 		HttpHeaders headers2 = new HttpHeaders();
 		headers2.set(HttpHeaders.USER_AGENT, ua);
 		headers2.add("Authorization", "Bearer "+accessToken);
@@ -114,7 +125,7 @@ public class GetOfficeUserByKeyWord {
 		
 		HttpEntity<String> requestEntity2 = new HttpEntity<String>(body2, headers2);
 		try {
-			ResponseEntity<String> response2= restTemplate.exchange(URLUtil.decode(endpoint2), HttpMethod.GET, requestEntity2, String.class);
+			ResponseEntity<String> response2= restTemplate.exchange(endpoint2, HttpMethod.GET, requestEntity2, String.class);
 			if(response2.getStatusCodeValue()==200) {
 				JSONObject jo = JSON.parseObject(response2.getBody());
 				JSONArray ja = jo.getJSONArray("value");
@@ -157,7 +168,7 @@ public class GetOfficeUserByKeyWord {
 				//other page
 				else {
 					String nextPage = jo.getString("@odata.nextLink");
-					getNextUrl(URLUtil.decode(nextPage), accessToken, page-1, ll);
+					getNextUrl(nextPage, accessToken, page-1, ll);
 				}
 				jsonTmp.put("rows", ll);
 				map.put("status", "0");
@@ -176,13 +187,16 @@ public class GetOfficeUserByKeyWord {
 	}
 	
 	private void getNextUrl(String url, String accessToken, int times, List<OfficeUser> ll) {
+        if (url == null || !url.startsWith("https://graph.microsoft.com/")) {
+            return;
+        }
 		HttpHeaders headers = new HttpHeaders();
 		headers.set(HttpHeaders.USER_AGENT, ua);
 		headers.add("Authorization", "Bearer "+accessToken);
 		String body="";
 		
 		HttpEntity<String> requestEntity = new HttpEntity<String>(body, headers);
-		ResponseEntity<String> response= restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
+		ResponseEntity<String> response= restTemplate.exchange(java.net.URI.create(url), HttpMethod.GET, requestEntity, String.class);
 		
 		JSONObject jo = JSON.parseObject(response.getBody());
 		JSONArray ja = jo.getJSONArray("value");
@@ -225,7 +239,7 @@ public class GetOfficeUserByKeyWord {
 			}
 		}
 		else {
-			getNextUrl(URLUtil.decode(nextPage), accessToken, times, ll);
+			getNextUrl(nextPage, accessToken, times, ll);
 		}
 	}
 	

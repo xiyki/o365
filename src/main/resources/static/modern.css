@@ -1,0 +1,219 @@
+:root {
+  --o365-ink: #25344a;
+  --o365-muted: #607187;
+  --o365-line: #dce5ef;
+  --o365-surface: #ffffff;
+  --o365-canvas: #f4f7fb;
+  --o365-blue: #2563a6;
+}
+
+.o365-app,
+.o365-auth {
+  color: var(--o365-ink);
+  font-family: "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  font-size: 13px;
+}
+
+.o365-app {
+  background: var(--o365-canvas);
+}
+
+.o365-app a,
+.o365-auth a {
+  color: var(--o365-blue);
+}
+
+.o365-app a:hover,
+.o365-auth a:hover {
+  color: #174a80;
+}
+
+.o365-app a:focus-visible,
+.o365-auth a:focus-visible,
+.o365-app input:focus-visible,
+.o365-auth input:focus-visible,
+.o365-app select:focus-visible,
+.o365-auth select:focus-visible {
+  outline: 2px solid var(--o365-blue);
+  outline-offset: 2px;
+}
+
+/* Keep EasyUI's layout and theme switcher; refine the app shell only. */
+.o365-app .app-header {
+  background: #ffffff;
+  border-bottom: 1px solid var(--o365-line);
+}
+
+.o365-app .app-header h3 {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  margin: 0;
+  padding: 0 20px;
+}
+
+.o365-app .app-header img {
+  display: block;
+}
+
+.o365-app .app-footer {
+  background: #edf3f9;
+  border-top: 1px solid var(--o365-line);
+  color: var(--o365-muted);
+  padding: 0 8px;
+}
+
+.o365-app .layout-panel-west > .panel-header {
+  padding: 10px 12px;
+}
+
+.o365-app .layout-panel-west > .panel-body {
+  background: #f8fafc;
+}
+
+.o365-app .accordion .accordion-header {
+  padding: 8px 10px;
+}
+
+.o365-app .accordion .accordion-header-selected {
+  background: #e8f1fb;
+}
+
+.o365-app .accordion .accordion-header-selected .panel-title {
+  color: #24507f;
+}
+
+.o365-app .tree-node {
+  border-radius: 4px;
+  margin: 2px 4px;
+  padding: 2px 0;
+}
+
+.o365-app .tabs-header {
+  padding-top: 6px;
+}
+
+.o365-app .tabs li a.tabs-inner {
+  padding: 0 13px;
+}
+
+.o365-app .home-content {
+  color: var(--o365-ink);
+  line-height: 1.7;
+  padding: 20px 24px !important;
+}
+
+.o365-app .home-content h2 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin: 0 0 18px;
+}
+
+.o365-app .home-content li {
+  margin: 0 0 9px;
+}
+
+.o365-app .home-content table {
+  border-collapse: collapse;
+  margin: 10px 0 14px;
+}
+
+.o365-app .home-content td {
+  border-bottom: 1px solid var(--o365-line);
+  padding: 6px 16px 6px 0;
+}
+
+.o365-app .datagrid-header,
+.o365-app .datagrid-toolbar {
+  border-color: var(--o365-line);
+}
+
+.o365-app .datagrid-header .datagrid-cell {
+  font-weight: 600;
+}
+
+.o365-app .datagrid-row td {
+  border-color: #edf1f6;
+}
+
+.o365-app .window,
+.o365-auth .window {
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(30, 54, 80, 0.16);
+  overflow: hidden;
+}
+
+.o365-app .window .panel-header,
+.o365-auth .window .panel-header {
+  padding: 6px 12px;
+}
+
+.o365-app .window .panel-title,
+.o365-auth .window .panel-title {
+  font-weight: 600;
+}
+
+.o365-app .l-btn,
+.o365-auth .l-btn,
+.o365-app .textbox,
+.o365-auth .textbox {
+  border-radius: 4px;
+}
+
+.o365-auth {
+  min-height: 100vh;
+  background-color: #eef4fa;
+  background-size: cover;
+  color: var(--o365-ink);
+  margin: 0;
+}
+
+.o365-auth .window {
+  border-color: var(--o365-line);
+}
+
+.o365-auth .window .panel-body {
+  background: var(--o365-surface);
+}
+
+.o365-auth .window .dialog-button {
+  background: #f8fafc;
+  border-top-color: var(--o365-line);
+}
+
+.o365-auth #ff b {
+  display: inline-block;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.o365-auth #ff > div {
+  margin-bottom: 4px !important;
+}
+
+.o365-auth #ff > div > input {
+  border: 1px solid #becbd9;
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: var(--o365-ink);
+  font: inherit;
+  height: 29px;
+  padding: 4px 8px;
+}
+
+.o365-auth #ff > div > div,
+.o365-auth #refertips {
+  color: var(--o365-muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .o365-app .home-content {
+    padding: 16px !important;
+  }
+
+  .o365-app .home-content h2 {
+    font-size: 17px;
+  }
+}

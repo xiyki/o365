@@ -1,0 +1,5 @@
+.idea/*
+.vscode/*
+.m2/*
+data/*
+target/*

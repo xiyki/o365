@@ -7,6 +7,7 @@
 </head>
 <body>
 	<form id="upFile" method="POST" enctype="multipart/form-data" action="/importApps">
+		<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 		<table style="padding:15px;margin:5px">
 			<tr >
 				<td>文件：</td>

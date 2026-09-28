@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -28,15 +27,13 @@ import hqr.o365.domain.TaMasterCd;
 @Service
 public class GetOrganizationInfo {
 	
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Autowired
 	private TaMasterCdRepo tmc;
 	
 	@Value("${UA}")
     private String ua;
-	
-	@Cacheable(value="cacheOrg")
 	public String getUsageLocation(String accessToken) {
 		String location = "US";
 		

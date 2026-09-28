@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -27,8 +26,10 @@ import hqr.o365.domain.TaOfficeInfo;
 
 @Service
 public class GetOfficeRoleUser {
+    @Autowired
+    private SelectedOfficeInfo selectedOfficeInfo;
 	
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 
 	@Autowired
 	private TaMasterCdRepo tmc;
@@ -41,20 +42,16 @@ public class GetOfficeRoleUser {
 	
 	@Value("${UA}")
     private String ua;
-	
-	@Cacheable(value="cacheRoleUser")
 	public HashMap<String, String> getRoleUsers(){
 		HashMap<String, String> map = new HashMap<String, String>();
 		List<PrivilegedUser> ll = new ArrayList<PrivilegedUser>();
 		HashMap jsonTmp = new HashMap();
 		
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			
 			if(!"".equals(accessToken)) {
 				//List<TaMasterCd> roleList = tmc.getSearchRoles();

@@ -1,10 +1,14 @@
 <html>
 <head>
 	<meta charset="UTF-8">
+	<meta name="_csrf" th:content="${_csrf.token}" />
+	<meta name="_csrf_header" th:content="${_csrf.headerName}" />
 	<title>注册O365管理员</title>
 	<link rel="stylesheet" href="jquery-easyui-1.9.14/themes/default/easyui.css" />
 	<link rel="stylesheet" href="jquery-easyui-1.9.14/themes/icon.css" />
+	<link rel="stylesheet" href="modern.css" />
 	<script type="text/javascript" src="jquery-easyui-1.9.14/jquery.min.js"></script>
+	<script type="text/javascript" src="csrf.js"></script>
 	<script type="text/javascript" src="jquery-easyui-1.9.14/jquery.easyui.min.js"></script>
 	<script type="text/javascript" src="jquery-easyui-1.9.14/locale/easyui-lang-zh_CN.js"></script>
 	<script type='text/javascript' src='bug-min.js'></script>
@@ -26,9 +30,10 @@
 		}
 	</style>
 </head>
-<body>
+<body class="o365-auth">
 	<div id="dlg" class="easyui-dialog" title="注册管理员" style="width: 320px; height: 350px; padding: 10px">
 		<form id="ff" method="post" action="/reg">
+			<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 			<div style="margin-bottom: 18px">
 				<b>用户:</b><input id="userid" name="userid" style="width: 100%" onblur="checkUserId()" />
 				<div id="useridtip" style="font-size: 10px">

@@ -43,7 +43,7 @@ import hqr.o365.service.ValidateAppInfo;
 @Service
 public class ScanAppStatusServiceForOne {
 	
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 
 	@Autowired
 	private TaOfficeInfoRepo toi;
@@ -87,9 +87,7 @@ public class ScanAppStatusServiceForOne {
 					roleId = cd.getCd();
 				}
 				String accessToken = "";
-				if(vai.checkAndGet(taAppRpt.getTenantId(), taAppRpt.getAppId(), taAppRpt.getSecretId())) {
-					accessToken = vai.getAccessToken();
-				}
+				accessToken = vai.getToken(taAppRpt.getTenantId(), taAppRpt.getAppId(), taAppRpt.getSecretId());
 				if(!"".equals(accessToken)) {
 					//get total admin user
 					String endpoint1 = "https://graph.microsoft.com/v1.0/directoryRoles/roleTemplateId="+roleId+"/members/$count";

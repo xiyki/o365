@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import com.alibaba.fastjson.annotation.JSONField;
 
 @Entity
 public class TaAppRpt {
@@ -14,6 +15,7 @@ public class TaAppRpt {
 	private int seqNo;
 	private String tenantId;
 	private String appId;
+	@JSONField(serialize = false)
 	private String secretId;
 	private String remarks;
 	private Date rptDt;

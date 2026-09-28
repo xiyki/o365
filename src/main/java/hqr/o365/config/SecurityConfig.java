@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -19,9 +20,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http
-				// 关闭csrf防护
-				.csrf().disable().headers().frameOptions().disable().and();
+		http.csrf().ignoringAntMatchers("/callback")
+				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()).and()
+				.headers().frameOptions().sameOrigin().and();
 		http
 				// 登录处理
 				.formLogin() // 表单方式，或httpBasic
@@ -29,7 +30,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.failureUrl("/error/401.html").permitAll().and();
 		http.authorizeRequests() // 授权配置
 				// 无需权限访问
-				.antMatchers("/h2/**","/*.png","/*.js", "/*.svg", "/jquery-easyui-1.9.14/**", "/", "/index.html", "/loginPage","/reg","/reg.html",
+				.antMatchers("/h2/**","/*.png","/*.js", "/*.svg", "/modern.css", "/jquery-easyui-1.9.14/**", "/", "/index.html", "/loginPage","/reg","/reg.html",
 						"/chkUserId","/callback","/refer","/refer.html","/createUserByInviteCd", "/*.jpg").permitAll()
 				// 其他接口需要登录后才能访问
 				.anyRequest().authenticated().and();

@@ -23,6 +23,8 @@ import hqr.o365.domain.TaOfficeInfo;
 
 @Service
 public class MassCreateInviteCd {
+    @Autowired
+    private SelectedOfficeInfo selectedOfficeInfo;
 	
 	@Autowired
 	private TaOfficeInfoRepo repo;
@@ -46,13 +48,11 @@ public class MassCreateInviteCd {
 		String result = "";
 		
 		//get info
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			
 			if(!"".equals(accessToken)) {
 				for(int i=0;i<count;i++) {

@@ -4,6 +4,7 @@ import java.util.Date;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import com.alibaba.fastjson.annotation.JSONField;
 
 @Entity
 public class TaInviteInfo {
@@ -23,6 +24,7 @@ public class TaInviteInfo {
 	//Global App seqNo
 	private int seqNo;
 	private String suffix;
+	@JSONField(serialize = false)
 	private String result;
 	public String getInviteId() {
 		return inviteId;

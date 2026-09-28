@@ -67,7 +67,11 @@ public class CallBackService {
 							WXBizMsgCrypt wxcpt = new WXBizMsgCrypt(sToken, sEncodingAESKey, sCorpID);
 							String sMsg = wxcpt.DecryptMsg(sReqMsgSig, sReqTimeStamp, sReqNonce, sReqData);
 							
-							DocumentBuilder db = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+							DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+							factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+							factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+							factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+							DocumentBuilder db = factory.newDocumentBuilder();
 							StringReader sr = new StringReader(sMsg);
 							Document document = db.parse(new InputSource(sr));
 

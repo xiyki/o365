@@ -27,6 +27,8 @@ import hqr.o365.domain.TaOfficeInfo;
 
 @Service
 public class DomainAction {
+    @Autowired
+    private SelectedOfficeInfo selectedOfficeInfo;
 	
 	@Autowired
 	private TaMasterCdRepo tmc;
@@ -43,14 +45,22 @@ public class DomainAction {
 	@Autowired
 	private CreateDnsRecordInCf cnr;
 	
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Value("${UA}")
     private String ua;
+
+	private boolean validDomain(String domain) {
+		return domain != null && domain.length() <= 253
+				&& domain.matches("(?i)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\\.[a-z]{2,63}");
+	}
 	
 	@CacheEvict(value= {"cacheDomain"}, allEntries = true)
 	public boolean createDomain(String domain) {
 		boolean res = false;
+		if (!validDomain(domain)) {
+			return false;
+		}
 		
 		String allDomains = gdi2.getAllDomains();
 		if(allDomains.indexOf(domain+" - unverified")>=0) {
@@ -58,13 +68,11 @@ public class DomainAction {
 			return true;
 		}
 		
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			
 			if(!"".equals(accessToken)) {
 				String endpoint = "https://graph.microsoft.com/v1.0/domains";
@@ -100,14 +108,15 @@ public class DomainAction {
 	@CacheEvict(value= {"cacheDomain"}, allEntries = true)
 	public String verificationDnsRecords(String domain) {
 		String dnsRecords = "fail";
+		if (!validDomain(domain)) {
+			return dnsRecords;
+		}
 		
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			
 			if(!"".equals(accessToken)) {
 				String endpoint = "https://graph.microsoft.com/v1.0/domains/"+domain+"/verificationDnsRecords";
@@ -154,16 +163,19 @@ public class DomainAction {
 	@CacheEvict(value= {"cacheDomain"}, allEntries = true)
 	public String verifyDomain(String domain) {
 		String res = "fail";
-		
+		if (domain == null) {
+			return res;
+		}
 		String arr[] = domain.split(" - ");
+		if (!validDomain(arr[0])) {
+			return res;
+		}
 		
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			
 			if(!"".equals(accessToken)) {
 				String endpoint = "https://graph.microsoft.com/v1.0/domains/"+arr[0]+"/verify";
@@ -196,18 +208,19 @@ public class DomainAction {
 	public boolean deleteDomain(String domain) {
 		boolean res = false;
 		
+		if (domain == null) {
+			return false;
+		}
 		String arr[] = domain.split(" - ");
-		if(arr[0]==null||arr[0].endsWith(".onmicrosoft.com")) {
+		if (!validDomain(arr[0]) || arr[0].toLowerCase().endsWith(".onmicrosoft.com")) {
 			return false;
 		}
 		
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			
 			if(!"".equals(accessToken)) {
 				String endpoint = "https://graph.microsoft.com/v1.0/domains/"+arr[0]+"/forceDelete";

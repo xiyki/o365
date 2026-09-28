@@ -20,7 +20,7 @@ import hqr.o365.domain.TaAppRpt;
 @Service
 public class GetExchangeRpt {
 	
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Autowired
 	private TaAppRptRepo tarr;
@@ -37,9 +37,7 @@ public class GetExchangeRpt {
 		if(opt.isPresent()) {
 			TaAppRpt taAppRpt = opt.get();
 			String accessToken = "";
-			if(vai.checkAndGet(taAppRpt.getTenantId(), taAppRpt.getAppId(), taAppRpt.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(taAppRpt.getTenantId(), taAppRpt.getAppId(), taAppRpt.getSecretId());
 			if(!"".equals(accessToken)) {
 				String endpoint = "https://graph.microsoft.com/v1.0/reports/getEmailActivityUserDetail(period='D30')";
 				HttpHeaders headers = new HttpHeaders();

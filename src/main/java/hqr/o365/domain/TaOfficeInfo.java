@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import com.alibaba.fastjson.annotation.JSONField;
 
 @Entity
 public class TaOfficeInfo {
@@ -13,10 +14,12 @@ public class TaOfficeInfo {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int seqNo;
 	private String userId;
+	@JSONField(serialize = false)
 	private String passwd;
 	private String tenantId;
 	private String appId;
 	private String maskAppId="*****";
+	@JSONField(serialize = false)
 	private String secretId;
 	private String maskSecretId="*****";
 	private String remarks;

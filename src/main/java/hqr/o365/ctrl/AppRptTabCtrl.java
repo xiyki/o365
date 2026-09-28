@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import hqr.o365.service.GetAppRptService;
@@ -55,7 +56,7 @@ public class AppRptTabCtrl {
 			System.out.println("Invalid row, force it to 10");
 		}
 		
-		return gars.getSysRpt(intRows, intPage);
+		return gars.getSysRpt(Math.max(1, Math.min(500, intRows)), Math.max(1, intPage));
 	}
 	
 	@ResponseBody
@@ -85,7 +86,7 @@ public class AppRptTabCtrl {
 	}
 	
 	@ResponseBody
-	@RequestMapping(value = {"/getAppRptManaully"})
+	@RequestMapping(value = {"/getAppRptManaully"}, method = RequestMethod.POST)
 	public boolean getOverallRptManaully(String page, String rows) {
 		sass.execute("M");
 		return true;

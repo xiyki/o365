@@ -169,6 +169,8 @@ public class UserTabCtrl {
 		catch (Exception e) {
 			System.out.println("Invalid row, force it to 100");
 		}
+		intPage = Math.max(1, intPage);
+		intRows = Math.max(1, Math.min(500, intRows));
 		HashMap<String,String> map = new HashMap<String,String>();
 		
 		Object obj = req.getSession().getAttribute("keyword");
@@ -281,7 +283,7 @@ public class UserTabCtrl {
 	}
 	
 	@ResponseBody
-	@RequestMapping(value = {"/getDefaultPwd"}, method = RequestMethod.GET)
+	@RequestMapping(value = {"/getDefaultPwd"}, method = RequestMethod.POST)
 	public String getDefaultPassword() {
 		return goud.getDefaultPwd();
 	}

@@ -31,7 +31,7 @@ public class ExportInvites {
 				sb.append(en.getInviteStatus()).append(",");
 				sb.append(en.getSeqNo()).append(",");
 				sb.append(en.getSuffix()).append(",");
-				sb.append(en.getResult()).append(System.getProperty("line.separator"));
+				sb.append("").append(System.getProperty("line.separator"));
 				bw.write(sb.toString());
 			}
 			

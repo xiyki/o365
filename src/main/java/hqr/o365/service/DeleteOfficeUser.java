@@ -18,8 +18,10 @@ import hqr.o365.domain.TaOfficeInfo;
 
 @Service
 public class DeleteOfficeUser {
+    @Autowired
+    private SelectedOfficeInfo selectedOfficeInfo;
 	
-	private RestTemplate restTemplate = new RestTemplate();
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Autowired
 	private TaOfficeInfoRepo repo;
@@ -36,13 +38,11 @@ public class DeleteOfficeUser {
 		int succ = 0;
 		int fail = 0;
 		//get info
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			if(!"".equals(accessToken)) {
 				for (String uid : uidArr) {
 					String endpoint = "https://graph.microsoft.com/v1.0/users/"+uid;

@@ -25,10 +25,10 @@ public class ExportAppInfo {
 			for (TaOfficeInfo en : list) {
 				StringBuilder sb = new StringBuilder();
 				sb.append(en.getUserId()).append(",");
-				sb.append(en.getPasswd()).append(",");
+				sb.append("").append(",");
 				sb.append(en.getTenantId()).append(",");
 				sb.append(en.getAppId()).append(",");
-				sb.append(en.getSecretId()).append(",");
+				sb.append("").append(",");
 				sb.append(en.getRemarks()).append(System.getProperty("line.separator"));
 				bw.write(sb.toString());
 			}

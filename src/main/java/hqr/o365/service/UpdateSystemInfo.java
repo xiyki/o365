@@ -26,7 +26,9 @@ public class UpdateSystemInfo {
 		//can find -> update
 		if(opt.isPresent()) {
 			TaMasterCd enti = opt.get();
-			enti.setCd(cd);
+			if (!SensitiveSetting.isSensitive(keyTy) || (cd != null && !cd.isEmpty())) {
+				enti.setCd(cd);
+			}
 			enti.setDecode(decode);
 			tmc.saveAndFlush(enti);
 			if("GEN_APP_RPT_CRON".equals(enti.getKeyTy())) {

@@ -94,11 +94,11 @@ public class InviteTabCtrl {
 			System.out.println("Invalid row, force it to 10");
 		}
 		
-		return gii.getAllInviteInfo(intRows, intPage);
+		return gii.getAllInviteInfo(Math.max(1, Math.min(500, intRows)), Math.max(1, intPage));
 	}
 	
 	@ResponseBody
-	@RequestMapping(value = {"/massCreateInviteCd"})
+	@RequestMapping(value = {"/massCreateInviteCd"}, method = RequestMethod.POST)
 	public String massCreateInviteCd(@RequestParam(name="count") String countStr,
 			@RequestParam(name="licenses") String licenses,
 			@RequestParam(name="domain") String domain,
@@ -116,14 +116,14 @@ public class InviteTabCtrl {
 	}
 	
 	@ResponseBody
-	@RequestMapping(value = {"/delInviteCds"})
+	@RequestMapping(value = {"/delInviteCds"}, method = RequestMethod.POST)
 	public String deleteInviteInfo(@RequestParam(name="uuids") String uuids) {
 		dii.deleteInviteCd(uuids);
 		return "已删除";
 	}
 	
 	@ResponseBody
-	@RequestMapping(value = {"/createUserByInviteCd"})
+	@RequestMapping(value = {"/createUserByInviteCd"}, method = RequestMethod.POST)
 	public String createUserByInviteCd(@RequestParam(name="mailNickname") String mailNickname,
 			@RequestParam(name="displayName") String displayName,
 			@RequestParam(name="inviteCd") String inviteCd,

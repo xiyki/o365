@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import hqr.o365.service.CallBackService;
 import hqr.o365.service.GetGlobalInd;
@@ -34,7 +35,7 @@ public class IndexCtrl {
 	}
 	
 	@ResponseBody
-	@RequestMapping(value = {"/callback"})
+	@RequestMapping(value = {"/callback"}, method = {RequestMethod.GET, RequestMethod.POST})
 	public String callback(HttpServletRequest request, @RequestBody(required=false) String body ){
 		return cbs.handleCallBack(request, body);
 	}

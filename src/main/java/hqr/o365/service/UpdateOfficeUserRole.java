@@ -11,7 +11,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import hqr.o365.dao.TaMasterCdRepo;
@@ -21,8 +20,10 @@ import hqr.o365.domain.TaOfficeInfo;
 
 @Service
 public class UpdateOfficeUserRole {
+    @Autowired
+    private SelectedOfficeInfo selectedOfficeInfo;
 	//need use new restTemplate to support the PATCH method
-	private RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+	private RestTemplate restTemplate = GraphHttpClient.create();
 	
 	@Autowired
 	private TaOfficeInfoRepo repo;
@@ -39,21 +40,26 @@ public class UpdateOfficeUserRole {
 	@CacheEvict(value="cacheRoleUser", allEntries = true)
 	public boolean update(String uid, String action) {
 		boolean flag = false;
+		if (uid == null || !uid.matches("[0-9a-fA-F-]{36}")
+				|| !("P".equals(action) || "C".equals(action))) {
+			return false;
+		}
 		
 		//init the role
-		String roleId = "	62e90394-69f5-4237-9190-012177145e10";
+		String roleId = "62e90394-69f5-4237-9190-012177145e10";
 		Optional<TaMasterCd> top1 = tmc.findById("DEFAULT_ADMIN_ROLE_ID");
 		if(top1.isPresent()) {
 			roleId = top1.get().getCd();
 		}
+		if (roleId == null || !roleId.matches("[0-9a-fA-F-]{36}")) {
+			return false;
+		}
 		
-		List<TaOfficeInfo> list = repo.findBySelected("是");
+		List<TaOfficeInfo> list = selectedOfficeInfo.current();
 		if(list!=null&&list.size()>0) {
 			TaOfficeInfo ta = list.get(0);
 			String accessToken = "";
-			if(vai.checkAndGet(ta.getTenantId(), ta.getAppId(), ta.getSecretId())) {
-				accessToken = vai.getAccessToken();
-			}
+			accessToken = vai.getToken(ta.getTenantId(), ta.getAppId(), ta.getSecretId());
 			if(!"".equals(accessToken)) {
 				String endpoint = "";
 				//grant
